@@ -26,7 +26,7 @@
 
   ## Usage
 
-  this a terminal command startup app
+  this a terminal command startup app + [heroku deployed]https://for-the-books.herokuapp.com/
 
   ## Installation 
 
