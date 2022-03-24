@@ -1,16 +1,45 @@
+const { AuthenticationError } = require('apollo-server-errors');
 const { User } = require('../models');
+const { signToken } = require("../utils/auth")
 
 const resolvers = {
     Query: {
-        users: async () => {
-            return User.find()
-            .select('-__v -password')
+        me: async (parent, args, context) => {
+            if (context.user){
+                const user = await User.findOne({ _id: context.user._id })
+                .select('-__v -password')
+
+                return user;
+            }
+
+            throw new AuthenticationError('Login to continue!');
+        }
+    },
+    Mutation: {
+        addUser: (parent, args) => {
+            const newUser = User.create(args);
+            const token = signToken(newUser)
+
+            return { newUser, token };
         },
 
-        user: async (parent, { username }) => {
-            const params = username ? { username }: {};
-            return User.find(params).sort({ username });
+        login: async (parent, { email, password}) => {
+            const user = await User.findOne({ email });
+
+            if (!user) {
+                throw new AuthenticationError('Incorrect credentials');
+            }
+
+            const correctPW = await user.isCorrectPassword(password);
+
+            if (!correctPW) {
+                throw new AuthenticationError('Incorrect credentials');
+            }
+
+            const token = signToken(user);
+            return { token, user };
         }
+
     }
 };
 
